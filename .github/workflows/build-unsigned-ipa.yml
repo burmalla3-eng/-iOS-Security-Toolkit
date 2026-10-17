@@ -17,15 +17,28 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      - name: Show available schemes
+        run: xcodebuild -list -project iOSSecurityToolkit.xcodeproj
+
       - name: Build app
         run: |
+          set -o pipefail
           xcodebuild \
             -project iOSSecurityToolkit.xcodeproj \
             -scheme iOSSecurityToolkit \
             -sdk iphoneos \
             -configuration Release \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee build.log
+
+      - name: Save build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Package unsigned IPA
         run: |
